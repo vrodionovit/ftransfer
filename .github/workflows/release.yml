@@ -1,38 +1,31 @@
-name: Release
+# .github/workflows/release.yaml
 
 on:
   release:
     types: [created]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+permissions:
+    contents: write
+    packages: write
 
+jobs:
+  releases-matrix:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        arch: [amd64, arm64]  # Add other architectures as needed
-
+        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64, arm64]
+        exclude:
+          - goarch: "386"
+            goos: darwin
+          - goarch: arm64
+            goos: windows
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.22' 
-
-      - name: Build for ${{ matrix.arch }}
-        run: |
-          GOARCH=${{ matrix.arch }} go build -o build/ftransfer-${{ matrix.arch }} ./... 
-
-
-      - name: Create Release Asset
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            build/ftransfer-amd64
-            build/ftransfer-arm64
-          tag: ${{ github.ref }}  # Use the release tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v4
+    - uses: wangyoucao577/go-release-action@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
