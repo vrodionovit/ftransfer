@@ -1,0 +1,49 @@
+# connections: List of connection configurations
+connections:
+  - name: "sftp_conn_1"       # name: Unique name for the connection
+    host: "127.0.0.1"         # host: Host address of the server
+    port: 22                  # port: Port number to connect to
+    protocol: "sftp"          # protocol: Protocol type (sftp or ftp)
+    username: "seenisftp"     # username: Username for authentication
+    password: "123qwe$$"      # password: Password for authentication
+    delay: 5                  # delay: Delay in seconds between operations
+    depth: 3                  # depth: Depth for recursive file download
+    path: "."                 # path: Path to the directory on the server
+    sshkeypath: "keys/sftp_conn_1"
+
+    # regex: "\\.(txt|jpeg)$"   # regex: Regular expression to match file types
+  
+  # - name: "sftp_conn_3"
+  #   host: "127.0.0.1"
+  #   port: 22
+  #   protocol: "sftp"
+  #   username: "seenisftp"
+  #   password: "123qwe$$"
+  #   delay: 5
+  #   depth: 3
+  #   path: "upload"
+  #   regex: "\\.(txt|jpeg)$"
+
+  # - name: "ftp_conn_1"
+  #   host: "127.0.0.1"
+  #   port: 21
+  #   protocol: "ftp"
+  #   username: "ftpuser"
+  #   password: "123qwe$$"
+  #   delay: 5
+  #   depth: 3
+  #   path: "uploads"
+
+  - name: "ftps_conn_test1"
+    host: "127.0.0.1"
+    port: 22
+    protocol: "ftpoverssh"
+    username: "ftpuser"
+    password: "123qwe$$"
+    delay: 5
+    depth: 3
+    path: "uploads"
+    sshkeypath: "keys/ftps_conn_test1"
+
+
+

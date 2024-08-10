@@ -1,0 +1,7 @@
+# Ignore the download folder
+download/
+
+# Ignore the keys folder
+keys/
+
+build/

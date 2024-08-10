@@ -1,0 +1,66 @@
+[36mINFO[0m[2024-07-20 15:01:57] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:01:57] | Group     | Name          | Host       | Port | Protocol | Username   | 
+[36mINFO[0m[2024-07-20 15:01:57] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:01:57] | group_3   | sftp_conn_1   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 15:01:57] | group_3   | sftp_conn_3   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 15:01:57] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:01:57] === group_1 - 0 ===                          
+[36mINFO[0m[2024-07-20 15:01:57] === group_2 - 0 ===                          
+[36mINFO[0m[2024-07-20 15:01:57] === group_3 - 2 ===                          
+[36mINFO[0m[2024-07-20 15:11:24] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:11:24] | Group     | Name          | Host       | Port | Protocol | Username   | 
+[36mINFO[0m[2024-07-20 15:11:24] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:11:24] | group_3   | sftp_conn_1   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 15:11:24] | group_3   | sftp_conn_3   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 15:11:24] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 15:11:24] === group_1 - 0 ===                          
+[36mINFO[0m[2024-07-20 15:11:24] === group_2 - 0 ===                          
+[36mINFO[0m[2024-07-20 15:11:24] === group_3 - 2 ===                          
+[36mINFO[0m[2024-07-20 15:11:25] Downloaded file: text.txt                    
+[31mERROR[0m[2024-07-20 15:11:25] Error deleting file from server: permission denied 
+[33mWARNING[0m[2024-07-20 15:11:47] File already downloaded: text.txt            
+[33mWARNING[0m[2024-07-20 15:12:08] File already downloaded: text.txt            
+[33mWARNING[0m[2024-07-20 15:12:30] File already downloaded: text.txt            
+[36mINFO[0m[2024-07-20 16:15:33] App Version: 1.0.0, Build Time: 2024-07-20T05:15:09Z 
+[36mINFO[0m[2024-07-20 16:15:33] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 16:15:33] | Group     | Name          | Host       | Port | Protocol | Username   | 
+[36mINFO[0m[2024-07-20 16:15:33] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 16:15:33] | group_3   | sftp_conn_1   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 16:15:33] | group_3   | sftp_conn_3   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-20 16:15:33] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-20 16:15:33] === group_3 - 2 ===                          
+[36mINFO[0m[2024-07-20 16:15:33] === group_1 - 0 ===                          
+[36mINFO[0m[2024-07-20 16:15:33] === group_2 - 0 ===                          
+[36mINFO[0m[2024-07-20 16:15:33] Server is running on port 8090               
+[33mWARNING[0m[2024-07-20 16:15:34] File already downloaded: text.txt            
+[36mINFO[0m[2024-07-20 22:19:02] App Version: , Build Time:                   
+[36mINFO[0m[2024-07-20 22:19:02] SSH key pair already exists for connection: sftp_conn_1 
+[36mINFO[0m[2024-07-20 22:19:02] SSH key pair already exists for connection: sftp_conn_3 
+[36mINFO[0m[2024-07-22 23:40:23] App Version: , Build Time:                   
+[36mINFO[0m[2024-07-22 23:40:24] SSH key pair generated for connection: ftps_conn_test1 
+[36mINFO[0m[2024-07-26 12:50:10] App Version: 1.0.0, Build Time: 2024-07-20T11:18:11Z 
+[31mFATAL[0m[2024-07-26 12:50:10] Error: unsupported protocol for ftps_conn_test1: ftpoverssh 
+[36mINFO[0m[2024-07-26 20:25:18] App Version: 1.0.0, Build Time: 2024-07-20T11:18:11Z 
+[31mFATAL[0m[2024-07-26 20:25:18] Error: unsupported protocol for ftps_conn_test1: ftpoverssh 
+[36mINFO[0m[2024-07-26 23:15:51] App Version: , Build Time:                   
+[36mINFO[0m[2024-07-26 23:15:51] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-26 23:15:51] | Group     | Name          | Host       | Port | Protocol | Username   | 
+[36mINFO[0m[2024-07-26 23:15:51] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-26 23:15:51] | group_5   | sftp_conn_1   | 127.0.0.1  | 22   | sftp     | seenisftp  | 
+[36mINFO[0m[2024-07-26 23:15:51] | group_5   | ftps_conn_test1 | 127.0.0.1  | 22   | ftpoverssh | ftpuser    | 
+[36mINFO[0m[2024-07-26 23:15:51] ------------------------------------------------------------------------- 
+[36mINFO[0m[2024-07-26 23:15:51] === group_3 - 0 ===                          
+[36mINFO[0m[2024-07-26 23:15:51] === group_4 - 0 ===                          
+[36mINFO[0m[2024-07-26 23:15:51] === group_5 - 2 ===                          
+[36mINFO[0m[2024-07-26 23:15:51] Server is running on port 8080               
+[36mINFO[0m[2024-07-26 23:15:51] Connection to 127.0.0.1:22 is available      
+[36mINFO[0m[2024-07-26 23:15:51] Connection to 127.0.0.1:22 is available      
+[36mINFO[0m[2024-07-26 23:15:51] === group_1 - 0 ===                          
+[36mINFO[0m[2024-07-26 23:15:51] === group_2 - 0 ===                          
+[36mINFO[0m[2024-07-26 23:15:51] Using SSH key for authentication: keys/sftp_conn_1 
+[33mWARNING[0m[2024-07-26 23:15:52] File already downloaded: seafile-server_11.0.3_x86-64.tar.gz 
+[33mWARNING[0m[2024-07-26 23:15:52] File already downloaded: text.txt            
+[36mINFO[0m[2024-07-26 23:15:57] Using SSH key for authentication: keys/ftps_conn_test1 
+[36mINFO[0m[2024-07-26 23:15:57] Successfully connected to SSH: ftps_conn_test1 
+[36mINFO[0m[2024-07-26 23:16:01] Shutting down application...                 
+[36mINFO[0m[2024-07-26 23:16:01] Application exiting                          
