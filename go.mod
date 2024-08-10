@@ -1,6 +1,6 @@
 module ftransfer
 
-go 1.22.5
+go 1.22
 
 require (
 	github.com/jlaffaye/ftp v0.2.0
