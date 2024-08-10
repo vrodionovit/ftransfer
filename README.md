@@ -1,3 +1,5 @@
+[![Release](https://github.com/that-shouldwork/ftransfer/actions/workflows/release.yml/badge.svg)](https://github.com/that-shouldwork/ftransfer/actions/workflows/release.yml)
+
 # File Transfer Application
 
 This application is designed to handle file transfers using both SFTP and FTP protocols. It reads connection details from a YAML configuration file, splits the connections into multiple groups, and handles each connection group concurrently.
