@@ -26,10 +26,13 @@ jobs:
         run: |
           GOARCH=${{ matrix.arch }} go build -o build/ftransfer-${{ matrix.arch }} ./... 
 
+
       - name: Create Release Asset
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            build/ftransfer-${{ matrix.arch }}
+            build/ftransfer-amd64
+            build/ftransfer-arm64
+          tag: ${{ github.ref }}  # Use the release tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
