@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        arch: [amd64, arm64]  # Add other architectures as needed
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'  # Specify your Go version
+
+      - name: Build for ${{ matrix.arch }}
+        run: |
+          GOARCH=${{ matrix.arch }} go build -o build/ftransfer-${{ matrix.arch }} ./...  # Adjust the build command as needed
+
+      - name: Create Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/ftransfer-amd64
+            build/ftransfer-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
