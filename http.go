@@ -10,6 +10,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/cors"
 )
 
 func loggingMiddleware(next http.Handler) http.Handler {
@@ -65,9 +66,20 @@ func handleHTTP(port int) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "database truncated"})
 	})
 
+	// Create a new CORS middleware
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"}, // Allow all origins
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+		MaxAge:         300, // Maximum age (in seconds) of the preflight request
+	})
+
+	// Create a handler chain: cors -> logging -> mux
+	handler := corsMiddleware.Handler(loggingMiddleware(mux))
+
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa(port),
-		Handler: loggingMiddleware(mux),
+		Handler: handler,
 	}
 
 	// Start the server
@@ -109,7 +121,21 @@ func getInfoFromDB(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT file_name, file_size, download_time, server_name FROM downloaded_files")
+	// Parse query parameters
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20 // Default limit
+	}
+
+	offset := (page - 1) * limit
+
+	// Update query with pagination
+	rows, err := db.Query("SELECT file_name, file_size, download_time, server_name FROM downloaded_files ORDER BY download_time DESC LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		logger.Printf("Error querying database: %v", err)
 		http.Error(w, "Failed to query database", http.StatusInternalServerError)
@@ -128,8 +154,29 @@ func getInfoFromDB(w http.ResponseWriter, r *http.Request) {
 		files = append(files, file)
 	}
 
+	// Get total count
+	var totalCount int
+	err = db.QueryRow("SELECT COUNT(*) FROM downloaded_files").Scan(&totalCount)
+	if err != nil {
+		logger.Printf("Error getting total count: %v", err)
+		http.Error(w, "Failed to get total count", http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Files      []DownloadedFile `json:"files"`
+		TotalCount int              `json:"totalCount"`
+		Page       int              `json:"page"`
+		Limit      int              `json:"limit"`
+	}{
+		Files:      files,
+		TotalCount: totalCount,
+		Page:       page,
+		Limit:      limit,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(files); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		logger.Printf("Error encoding response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
