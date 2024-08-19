@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -23,53 +24,18 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 func handleHTTP(port int) {
 	mux := http.NewServeMux()
+
+	// Define handlers
 	mux.HandleFunc("/info", getInfoFromDB)
 	mux.HandleFunc("/connections", getConnections)
 	mux.HandleFunc("/health", healthCheck)
-	mux.HandleFunc("/deleteOldEntries", func(w http.ResponseWriter, r *http.Request) {
-		db, err := openDatabase()
-		if err != nil {
-			logger.Printf("Error opening database: %v", err)
-			http.Error(w, "Failed to open database", http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-
-		err = deleteOldEntries(db)
-		if err != nil {
-			logger.Printf("Error deleting old entries: %v", err)
-			http.Error(w, "Failed to delete old entries", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "old entries deleted"})
-	})
-
-	mux.HandleFunc("/truncateDatabase", func(w http.ResponseWriter, r *http.Request) {
-		db, err := openDatabase()
-		if err != nil {
-			logger.Printf("Error opening database: %v", err)
-			http.Error(w, "Failed to open database", http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-
-		err = truncateDatabase(db)
-		if err != nil {
-			logger.Printf("Error truncating database: %v", err)
-			http.Error(w, "Failed to truncate database", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "database truncated"})
-	})
-
+	mux.HandleFunc("/deleteOldEntries", handleDelete)
+	mux.HandleFunc("/truncateDatabase", handleTruncate)
+	mux.HandleFunc("/", serveReactApp)
 	// Create a new CORS middleware
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"}, // Allow all origins
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"*"},
 		MaxAge:         300, // Maximum age (in seconds) of the preflight request
 	})
@@ -106,6 +72,60 @@ func handleHTTP(port int) {
 	}
 
 	logger.Println("Server exiting")
+}
+
+func handleTruncate(w http.ResponseWriter, r *http.Request) {
+	db, err := openDatabase()
+	if err != nil {
+		logger.Printf("Error opening database: %v", err)
+		http.Error(w, "Failed to open database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	err = truncateDatabase(db)
+	if err != nil {
+		logger.Printf("Error truncating database: %v", err)
+		http.Error(w, "Failed to truncate database", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "database truncated"})
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+	db, err := openDatabase()
+	if err != nil {
+		logger.Printf("Error opening database: %v", err)
+		http.Error(w, "Failed to open database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	err = deleteOldEntries(db)
+	if err != nil {
+		logger.Printf("Error deleting old entries: %v", err)
+		http.Error(w, "Failed to delete old entries", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "old entries deleted"})
+}
+
+func serveReactApp(w http.ResponseWriter, r *http.Request) {
+	// Determine the file path
+	path := filepath.Join("./web", r.URL.Path)
+
+	// If the file doesn't exist, serve index.html
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		http.ServeFile(w, r, "./web/index.html")
+		return
+	}
+
+	// Otherwise, serve the requested file
+	http.FileServer(http.Dir("./web")).ServeHTTP(w, r)
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
