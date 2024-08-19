@@ -74,8 +74,11 @@ func handleHTTP(port int) {
 		MaxAge:         300, // Maximum age (in seconds) of the preflight request
 	})
 
-	// Create a handler chain: cors -> logging -> mux
-	handler := corsMiddleware.Handler(loggingMiddleware(mux))
+	// Apply CORS middleware to the entire mux
+	handler := corsMiddleware.Handler(mux)
+
+	// Apply logging middleware after CORS
+	handler = loggingMiddleware(handler)
 
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa(port),
