@@ -51,6 +51,7 @@ echo "$username:$password" | sudo chpasswd
 sudo mkdir -p /sftpdata/$username/upload
 sudo chown root:root /sftpdata/$username
 sudo chmod 755 /sftpdata/$username
+sudo chmod 777 /sftpdata/$username/upload
 sudo chown $username:sftpusers /sftpdata/$username/upload
 
 
