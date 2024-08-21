@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/smtp"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -43,6 +42,7 @@ type Connection struct {
 	Depth      int    `yaml:"depth"`
 	Regex      string `yaml:"regex"`
 	SSHKeyPath string `yaml:"sshkeypath"`
+	Status     bool   `yaml:"status,omitempty" default:"false"`
 }
 
 type Config struct {
@@ -81,6 +81,7 @@ type Manager interface {
 
 var db DB
 
+var Connections = SplittedConnections{}
 var download_folder = ""
 
 var logger *logrus.Logger = setupLogger()
@@ -164,42 +165,42 @@ func splitConnections(config Config, numSplits int) SplittedConnections {
 	return splitted
 }
 
-func sendEmail(to, subject, body string) error {
+// func sendEmail(to, subject, body string) error {
 
-	// Set up the email server configuration.
-	var from string = "coldplugy@gmail.com"
-	var password string = "Wyg6j{}h"
+// 	// Set up the email server configuration.
+// 	var from string = "coldplugy@gmail.com"
+// 	var password string = "Wyg6j{}h"
 
-	var smtpServer string = "smtp.gmail.com"
-	var smtpPort int = 587
+// 	var smtpServer string = "smtp.gmail.com"
+// 	var smtpPort int = 587
 
-	// Set up authentication information.
-	auth := smtp.PlainAuth("", from, password, smtpServer)
+// 	// Set up authentication information.
+// 	auth := smtp.PlainAuth("", from, password, smtpServer)
 
-	// Compose the email message.
-	msg := []byte("To: " + to + "\r\n" +
-		"From: " + from + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"MIME-version: 1.0;\r\n" +
-		"Content-Type: text/html; charset=\"UTF-8\";\r\n" +
-		"\r\n" +
-		body + "\r\n")
+// 	// Compose the email message.
+// 	msg := []byte("To: " + to + "\r\n" +
+// 		"From: " + from + "\r\n" +
+// 		"Subject: " + subject + "\r\n" +
+// 		"MIME-version: 1.0;\r\n" +
+// 		"Content-Type: text/html; charset=\"UTF-8\";\r\n" +
+// 		"\r\n" +
+// 		body + "\r\n")
 
-	// // Send the email without authentication.
-	// err := smtp.SendMail(fmt.Sprintf("%s:%d", smtpServer, smtpPort), nil, from, []string{to}, msg)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to send email: %v", err)
-	// }
+// 	// // Send the email without authentication.
+// 	// err := smtp.SendMail(fmt.Sprintf("%s:%d", smtpServer, smtpPort), nil, from, []string{to}, msg)
+// 	// if err != nil {
+// 	// 	return fmt.Errorf("failed to send email: %v", err)
+// 	// }
 
-	// Send the email without authentication.
-	err := smtp.SendMail(fmt.Sprintf("%s:%d", smtpServer, smtpPort), auth, from, []string{to}, msg)
-	if err != nil {
-		return fmt.Errorf("failed to send email: %v", err)
-	}
+// 	// Send the email without authentication.
+// 	err := smtp.SendMail(fmt.Sprintf("%s:%d", smtpServer, smtpPort), auth, from, []string{to}, msg)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to send email: %v", err)
+// 	}
 
-	logger.Infof("Email sent successfully to %s", to)
-	return nil
-}
+// 	logger.Infof("Email sent successfully to %s", to)
+// 	return nil
+// }
 
 func bytesToHumanReadable(bytes int64) string {
 	const (
@@ -699,7 +700,7 @@ func (fm *ManagerFTP) connect(conn Connection) error {
 		return fmt.Errorf("failed to dial FTP: %v", err)
 	}
 
-  //welcomeMessage, err := ftp.StatusText()
+	//welcomeMessage, err := ftp.StatusText()
 
 	// Login to the FTP server
 	err = ftpConn.Login(conn.Username, conn.Password)
@@ -950,7 +951,7 @@ func greeting() {
 
 func main() {
 
-  greeting()
+	greeting()
 	//if err := sendEmail("redfosforjs@gmail.com", "Some text", "Some text"); err != nil {
 	//  logger.Fatalf("Failed to send email: %v", err)
 	//}
@@ -1030,28 +1031,29 @@ func main() {
 
 	go handleHTTP(*port)
 
-	splittedConnections := splitConnections(config, *threads)
+	Connections = splitConnections(config, *threads)
 
 	logger.Debug("Splitted Connections Table:")
 	logger.Infof("-------------------------------------------------------------------------")
 	logger.Infof("| Group     | Name          | Host       | Port | Protocol | Username   |")
 	logger.Infof("-------------------------------------------------------------------------")
-	for split, conns := range splittedConnections.Connection {
+	for split, conns := range Connections.Connection {
 		for _, conn := range conns {
 			logger.Infof("| %-9s | %-13s | %-10s | %-4d | %-8s | %-10s |", split, conn.Name, conn.Host, conn.Port, conn.Protocol, conn.Username)
 		}
 	}
 	logger.Infof("-------------------------------------------------------------------------")
 
-	for split, conns := range splittedConnections.Connection {
+	for split, conns := range Connections.Connection {
 		logger.Infof("=== %s - %d ===\n", split, len(conns))
-		for _, conn := range conns {
-			if checkHostPort(conn.Host, conn.Port) {
-				logger.Infof("Connection to %s:%d is available\n", conn.Host, conn.Port)
+		for i := range conns {
+			if checkHostPort(conns[i].Host, conns[i].Port) {
+				conns[i].Status = true
+				logger.Infof("Connection to %s:%d is available\n", conns[i].Host, conns[i].Port)
 			} else {
-				logger.Errorf("Connection to %s:%d is not available\n", conn.Host, conn.Port)
+				conns[i].Status = false
+				logger.Errorf("Connection to %s:%d is not available\n", conns[i].Host, conns[i].Port)
 			}
-
 		}
 
 		go handleConnection(conns, split)
