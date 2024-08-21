@@ -207,12 +207,7 @@ func getInfoFromDB(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get connections from the YAML configuration
 func getConnections(w http.ResponseWriter, r *http.Request) {
-	config, err := readConfig("connections.yaml")
-	if err != nil {
-		http.Error(w, "Failed to read config", http.StatusInternalServerError)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(config.Connections)
+	json.NewEncoder(w).Encode(Connections)
 }
