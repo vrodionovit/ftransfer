@@ -43,6 +43,7 @@ type Connection struct {
 	Regex      string `yaml:"regex"`
 	SSHKeyPath string `yaml:"sshkeypath"`
 	Status     bool   `yaml:"status,omitempty" default:"false"`
+	Separate   bool   `yaml:"separate" default:"false"`
 }
 
 type Config struct {
@@ -501,9 +502,11 @@ func handleFTPoverSSH(conn Connection) {
 
 	// Define the source folder for downloads
 	var srcFolder string = conn.Path
-
 	// Define the local directory for downloads
-	localDir := path.Join(download_folder, conn.Name)
+	localDir := download_folder
+	if conn.Separate {
+		localDir = path.Join(download_folder, conn.Name)
+	}
 	if _, err := os.Stat(localDir); os.IsNotExist(err) {
 		// Create the local directory if it does not exist
 		err := os.MkdirAll(localDir, os.ModePerm)
@@ -539,7 +542,10 @@ func handleFTP(conn Connection) {
 	var srcFolder string = conn.Path
 
 	// Define the local directory for downloads
-	localDir := path.Join(download_folder, conn.Name)
+	localDir := download_folder
+	if conn.Separate {
+		localDir = path.Join(download_folder, conn.Name)
+	}
 	if _, err := os.Stat(localDir); os.IsNotExist(err) {
 		// Create the local directory if it does not exist
 		err := os.MkdirAll(localDir, os.ModePerm)
@@ -572,7 +578,11 @@ func handleSFTP(conn Connection) {
 	var srcFolder string = conn.Path
 
 	// Define the local directory for downloads
-	localDir := path.Join(download_folder, conn.Name)
+	localDir := download_folder
+	if conn.Separate {
+		localDir = path.Join(download_folder, conn.Name)
+	}
+
 	if _, err := os.Stat(localDir); os.IsNotExist(err) {
 		// Create the local directory if it does not exist
 		err := os.MkdirAll(localDir, os.ModePerm)
@@ -641,7 +651,7 @@ func (fm *ManagerFTPoverSSH) connect(conn Connection) error {
 		}
 
 	} else {
-		logger.Infof("Using password for authentication: %s\n", conn.Username)
+		logger.Debugf("Using password for authentication: %s\n", conn.Username)
 		// Set up SSH client configuration
 		config = &ssh.ClientConfig{
 			User: conn.Username,
@@ -853,7 +863,7 @@ func (fm *ManagerSFTP) connectToSFTP(conn Connection) error {
 		}
 
 	} else {
-		logger.Infof("Using password for authentication: %s\n", conn.Username)
+		logger.Debugf("Using password for authentication: %s\n", conn.Username)
 		// Set up SSH client configuration
 		config = &ssh.ClientConfig{
 			User: conn.Username,
