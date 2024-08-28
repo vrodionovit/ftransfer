@@ -44,6 +44,7 @@ type Connection struct {
 	SSHKeyPath string `yaml:"sshkeypath"`
 	Status     bool   `yaml:"status,omitempty" default:"false"`
 	Separate   bool   `yaml:"separate" default:"false"`
+	Remove     bool   `yaml:"remove" default:"true"`
 }
 
 type Config struct {
@@ -229,6 +230,64 @@ func bytesToHumanReadable(bytes int64) string {
 	}
 }
 
+func resumableDownload(fm *ManagerSFTP, remoteFilePath, localFilePath string) error {
+	srcFile, err := fm.sftpClient.Open(remoteFilePath)
+	if err != nil {
+		return fmt.Errorf("error opening source file: %v", err)
+	}
+	defer srcFile.Close()
+
+	fileInfo, err := srcFile.Stat()
+	if err != nil {
+		return fmt.Errorf("error getting file info: %v", err)
+	}
+	totalSize := fileInfo.Size()
+
+	var dstFile *os.File
+	var startPos int64 = 0
+
+	// Check if partial file exists
+	if info, err := os.Stat(localFilePath); err == nil {
+		startPos = info.Size()
+		dstFile, err = os.OpenFile(localFilePath, os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("error opening existing file: %v", err)
+		}
+		logger.Infof("Resuming download from position %d", startPos)
+	} else {
+		dstFile, err = os.Create(localFilePath)
+		if err != nil {
+			return fmt.Errorf("error creating destination file: %v", err)
+		}
+	}
+	defer dstFile.Close()
+
+	// Seek to the start position in both files
+	_, err = srcFile.Seek(startPos, io.SeekStart)
+	if err != nil {
+		return fmt.Errorf("error seeking in source file: %v", err)
+	}
+
+	_, err = dstFile.Seek(startPos, io.SeekStart)
+	if err != nil {
+		return fmt.Errorf("error seeking in destination file: %v", err)
+	}
+
+	// Calculate the download time
+	startTime := time.Now()
+
+	// Copy the file contents from the remote file to the local file
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return fmt.Errorf("error copying file: %v", err)
+	}
+
+	downloadTime := time.Since(startTime)
+	logger.Infof("Downloaded file: %s (Size: %s) in %v\n", path.Base(remoteFilePath), bytesToHumanReadable(totalSize), downloadTime)
+
+	return nil
+}
+
 func recursivelyDownloadSFTP(remotePath, localPath string, depth int, fm ManagerSFTP, conn Connection) error {
 	if depth == 0 {
 		return nil
@@ -292,41 +351,20 @@ func recursivelyDownloadSFTP(remotePath, localPath string, depth int, fm Manager
 				continue
 			}
 			// If the file is not a directory, download the file
-			srcFile, err := fm.sftpClient.Open(remoteFilePath)
+			err = resumableDownload(&fm, remoteFilePath, localFilePath)
 			if err != nil {
-				logger.Debugf("Error opening source file: %v\n", err)
+				logger.Debugf("Error downloading file: %v\n", err)
 				continue
 			}
-			defer srcFile.Close()
-
-			dstFile, err := os.Create(localFilePath)
-			if err != nil {
-				logger.Debugf("Error creating destination file: %v\n", err)
-				continue
-			}
-			defer dstFile.Close()
-
-			// Calculate the download time
-			startTime := time.Now()
-
-			// Copy the file contents from the remote file to the local file
-			_, err = io.Copy(dstFile, srcFile)
-			if err != nil {
-				logger.Debugf("Error copying file: %v\n", err)
-				continue
-			}
-
-			downloadTime := time.Since(startTime)
-			logger.Infof("Downloaded file: %s in %v\n", file.Name(), downloadTime)
 
 			// Check file sizes to ensure the download was successful
-			srcFileInfo, err := srcFile.Stat()
+			srcFileInfo, err := fm.sftpClient.Stat(remoteFilePath)
 			if err != nil {
 				logger.Debugf("Error getting source file info: %v\n", err)
 				continue
 			}
 
-			dstFileInfo, err := dstFile.Stat()
+			dstFileInfo, err := os.Stat(localFilePath)
 			if err != nil {
 				logger.Debugf("Error getting destination file info: %v\n", err)
 				continue
@@ -345,12 +383,16 @@ func recursivelyDownloadSFTP(remotePath, localPath string, depth int, fm Manager
 
 				logger.Debugf("File size match for %s: %d bytes\n", file.Name(), srcFileInfo.Size())
 
-				// If the file sizes match, delete the file from the server
-				err = fm.sftpClient.Remove(remoteFilePath)
-				if err != nil {
-					logger.Errorf("Error deleting file from server: %v\n", err)
+				// If the file sizes match and Remove is true, delete the file from the server
+				if conn.Remove {
+					err = fm.sftpClient.Remove(remoteFilePath)
+					if err != nil {
+						logger.Errorf("Error deleting file from server: %v\n", err)
+					} else {
+						logger.Debugf("Deleted file from server: %s\n", remoteFilePath)
+					}
 				} else {
-					logger.Debugf("Deleted file from server: %s\n", remoteFilePath)
+					logger.Debugf("File not removed from server as per configuration: %s\n", remoteFilePath)
 				}
 
 				// Create a sample downloaded file entry
@@ -461,10 +503,16 @@ func recursivelyDownloadFTP(remotePath, localPath string, depth int, fm Manager,
 					logger.Debugf("Deleted invalid local file: %s\n", localFilePath)
 				}
 			} else {
-				// If the file sizes match, delete the file from the server
-				err = fm.deleteFile(remoteFilePath)
-				if err != nil {
-					logger.Debugf("Error deleting file from server: %v\n", err)
+				// If the file sizes match and Remove is true, delete the file from the server
+				if conn.Remove {
+					err = fm.deleteFile(remoteFilePath)
+					if err != nil {
+						logger.Debugf("Error deleting file from server: %v\n", err)
+					} else {
+						logger.Debugf("Deleted file from server: %s\n", remoteFilePath)
+					}
+				} else {
+					logger.Debugf("File not removed from server as per configuration: %s\n", remoteFilePath)
 				}
 
 				// Create a sample downloaded file entry
